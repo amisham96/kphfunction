@@ -19,4 +19,4 @@ def BlobTrigger(myblob: func.InputStream):
     container_client = client.get_container_client("container1")
     blob_client = container_client.get_blob_client(myblob.name)
     blob_client.delete_blob()
-    logging.info(f"Blob {myblob.name} deleted successfully")   
+    logging.info(f"Blob {myblob.name} deleted successfully")
