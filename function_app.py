@@ -1,25 +1,22 @@
-import azure.functions as func
 import logging
+import os
 
-app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
+import azure.functions as func
+from azure.storage.blob import *
 
-@app.route(route="http_trigger")
-def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
+app= func.FunctionApp()
 
-    name = req.params.get('name')
-    if not name:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            name = req_body.get('name')
+@app.blob_trigger(arg_name="myblob", path="container1/{name}.txt",
+                               connection="AzureWebJobsStorage") 
+def BlobTrigger(myblob: func.InputStream):
+    logging.info(f"Python blob trigger function processed blob"
+                f"Name: {myblob.name}"
+                f"Blob Size: {myblob.length} bytes")
 
-    if name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
-    else:
-        return func.HttpResponse(
-             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-             status_code=200
-        )
+    Connectionstring= os.getenv("AzureWebJobsStorage")
+
+    client = BlobServiceClient.from_connection_string(Connectionstring)
+    container_client = client.get_container_client("container1")
+    blob_client = container_client.get_blob_client(myblob.name)
+    blob_client.delete_blob()
+    logging.info(f"Blob {myblob.name} deleted successfully")   
